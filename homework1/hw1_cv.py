@@ -33,7 +33,7 @@ def set_equivalence(val1, val2):
                 equivalences.append({val1, val2})
     else:
         equivalences.append({val1, val2})
-    print(equivalences)
+    # print(equivalences)
 
 
 def correct_labels(label_mat, eq_list):
@@ -64,7 +64,7 @@ def CCL(image):
                 elif up > 0 and left > 0:
                     labels[u][v] = min([up, left])
                     set_equivalence(up, left)
-                    print("setting")
+                    # print("setting")
                 elif up > 0 and left == 0:
                     labels[u][v] = up
                 elif up == 0 and left > 0:
