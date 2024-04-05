@@ -1,12 +1,14 @@
 # Srikanth Schelbert Homework1 (MP2)
 
 import matplotlib.pyplot as plt
+import matplotlib.image
 import numpy as np
 import math
 from PIL import Image
 
 # Open the .bmp file
 image = Image.open("homework2/gun.bmp")
+# matplotlib.image.imsave('name.png', my_array)
 
 # Display basic information about the image
 print("Image format:", image.format)
@@ -44,7 +46,8 @@ def dilate_new_image(new_image, u, v):
 
 
 new_img = dilate(image)
+new_img2 = new_img.T[::-1]
 # Plot the array as an image
-plt.imshow(new_img, cmap='viridis', origin='lower')
+plt.imshow(new_img2, cmap='viridis', origin='lower')
 plt.colorbar()
 plt.show()

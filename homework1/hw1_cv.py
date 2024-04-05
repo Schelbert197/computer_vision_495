@@ -54,7 +54,8 @@ def CCL(image):
             # print(highest_label)
             if image.getpixel((u, v)) == 0:
                 pass
-            elif (0 < u < (image.size[0] - 1)) and (0 < v < (image.size[1] - 1)):
+            elif (0 < u < (image.size[0] - 1)) and \
+                    (0 < v < (image.size[1] - 1)):
                 # check that u and v arent at the edges
                 # print(u, v)
                 up, left = labels[u][v - 1], labels[u - 1][v]
@@ -86,4 +87,9 @@ def CCL(image):
     return labels
 
 
-CCL(image)
+new_img = CCL(image)
+new_img2 = new_img.T[::-1]
+# Plot the array as an image
+plt.imshow(new_img2, cmap='viridis', origin='lower')
+plt.colorbar()
+plt.show()
