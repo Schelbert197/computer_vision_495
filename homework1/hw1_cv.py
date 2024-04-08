@@ -65,15 +65,31 @@ def join_sets_with_shared_value(sets):
 
 def correct_labels(label_mat, eq_list):
     """Corrects the labels to only show the min accounting for equivalences"""
+    size_dict = {}
     for i in range(label_mat.shape[0]):
         for j in range(label_mat.shape[1]):
             for k in range(len(eq_list)):
                 if label_mat[i][j] in eq_list[k]:
                     label_mat[i][j] = max(eq_list[k])
+                    try:
+                        size_dict[int(max(eq_list[k]))] += 1
+                    except KeyError:
+                        size_dict[int(max(eq_list[k]))] = 1
+    return filter_size(label_mat, size_dict)
+
+
+def filter_size(label_mat, size_dict, filter_size=20):
+    """Takes any label fewer than n occurences and sets it as background (0)"""
+    for i in range(label_mat.shape[0]):
+        for j in range(label_mat.shape[1]):
+            if label_mat[i][j] == 0:
+                pass
+            elif size_dict[int(label_mat[i][j])] < filter_size:
+                label_mat[i][j] = 0
     return label_mat
 
 
-def CCL(image):
+def CCL_first_pass(image):
     labels = np.zeros([image.size[0], image.size[1]])
     highest_label = 1
     for u in range(image.size[0]):
@@ -116,11 +132,17 @@ def CCL(image):
     return labels
 
 
-new_img = CCL(image)
-updated_equiv = join_sets_with_shared_value(equivalences)
-new_img3 = correct_labels(new_img, updated_equiv)
-new_img2 = new_img3.T[::-1]
+def CCL(image, equivalences):
+    new_img = CCL_first_pass(image)
+    updated_equiv = join_sets_with_shared_value(equivalences)
+    new_img2 = correct_labels(new_img, updated_equiv)
+    new_img_final = new_img2.T[::-1]
+    return new_img_final, len(updated_equiv)
+
+
+final_image, num_labels = CCL(image, equivalences)
+print(f"Number of unique segments/labels: {num_labels}")
 # Plot the array as an image
-plt.imshow(new_img2, cmap='viridis', origin='lower')
+plt.imshow(final_image, cmap='viridis', origin='lower')
 plt.colorbar()
 plt.show()
