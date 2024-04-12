@@ -106,25 +106,21 @@ def boundary(image, input_SE=(2, 2, 2, 2)):
     # create first closed image
     new_img = dilate(image, SE=input_SE)
     new_img2 = erode(convert_to_image(new_img), SE=input_SE)
-    # new_img2 = new_img2.T[::-1]
-    print(new_img2.shape)
-    plt.imshow(new_img2, cmap='viridis', origin='lower')
-    plt.colorbar()
-    plt.show()
 
     # Create new dilated image with closed array
     new_img6 = dilate(convert_to_image(new_img2), SE=(1, 1, 1, 1))
+    print(new_img6.shape)
     new_img7 = new_img6.T[:-1:]
-    new_img7 = new_img7.resize(
-        (new_img2.shape[1], new_img2.shape[0]))  # Resize to match shape
-    print(new_img7.shape)
-    plt.imshow(new_img7, cmap='viridis', origin='lower')
-    plt.colorbar()
-    plt.show()
+
+    # List of extra zeros to add
+    zeros_list = [0] * new_img6.shape[0]
+
+    # Append the list to the numpy array
+    new_arr = np.append(new_img7, [zeros_list], axis=0)
 
     # subtract images and show
-    # new_img4 = convert_to_image(new_img7 - new_img2)
-    # new_img4.show()
+    new_img4 = convert_to_image(new_arr - new_img2)
+    new_img4.show()
 
 # new_img = dilate(image, SE=(2, 2, 2, 2))
 # # new_img2 = new_img.T[::-1]
@@ -161,7 +157,7 @@ if __name__ == "__main__":
         case 'c':
             # Show the image
             image.show("Original Image")
-            closing(image, (2, 2, 2, 2))
+            closing(image, (3, 3, 3, 3))
         case 'o':
             # Show the image
             image.show("Original Image")
