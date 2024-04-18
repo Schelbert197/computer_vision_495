@@ -1,72 +1,68 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import colorsys
+import os
+import cv2
 
 # Load the image
-image = Image.open("homework4/gun1.bmp")
+img_path = "homework4/pointer1.bmp"
+image = Image.open(img_path)
+dir_path = "homework4/test_images"
 
-# Convert image to RGB (if not already in RGB)
-image_rgb = image.convert("RGB")
+# # Convert to HSV color space
+test_image_path = cv2.imread(img_path)
+test_image = cv2.cvtColor(test_image_path, cv2.COLOR_BGR2HSV)
+hue_test, saturation_test, value_test = cv2.split(test_image)
 
-# Convert image to numpy array
-image_array = np.array(image_rgb)
+image_array = np.array(test_image)
 
-# # Normalize pixel values to range [0, 1]
-# image_array_norm = image_array / 255.0
+# iterate through each training image and save it
+skin_test_images = []
+for filename in os.listdir(dir_path):
+    # Check if the file is an image (you can add more formats if needed)
+    if filename.endswith(".bmp") or filename.endswith(".jpg") or filename.endswith(".png"):
+        # Construct full file path
+        filepath = os.path.join(dir_path, filename)
+        # Read the image
+        image_t = cv2.imread(filepath)
+        # Append the image to the list
+        skin_test_images.append(image_t)
 
-# # Define skin tone threshold ranges in RGB color space
-# lower_bound = np.array([0, 48, 80], dtype=np.uint8)
-# upper_bound = np.array([255, 255, 255], dtype=np.uint8)
+# Create an empty 2D histogram for hue and saturation values
+# Number of bins for hue (0 to 179) and saturation (0 to 255)
+# Get the shape of the original image
+image_shape = image_array.shape[:2]
+histogram_bins = (180, 256)
+histogram = np.zeros((180, 256), dtype=float)
 
-# # Create a binary mask to identify pixels within the skin tone range
-# skin_mask = np.logical_and.reduce((image_array_norm[:, :, 0] > lower_bound[0],
-#                                    image_array_norm[:, :, 1] > lower_bound[1],
-#                                    image_array_norm[:, :, 2] > lower_bound[2],
-#                                    image_array_norm[:, :, 0] < upper_bound[0],
-#                                    image_array_norm[:, :, 1] < upper_bound[1],
-#                                    image_array_norm[:, :, 2] < upper_bound[2]))
+# Calculate hue and saturation values for each pixel in all skin test images
+for image_hsv_t in skin_test_images:
+    # test_image_path = cv2.imread("../images/pointer1.bmp")
+    test_image = cv2.cvtColor(image_hsv_t, cv2.COLOR_BGR2HSV)
+    hue_test, saturation_test, value_test = cv2.split(test_image)
+    hue_values = hue_test.flatten()
+    saturation_values = saturation_test.flatten()
 
-# # Apply the mask to the original image to extract skin tone regions
-# skin_regions = np.zeros_like(image_array)
-# skin_regions[skin_mask] = image_array[skin_mask]
+    # Update the histogram with the counts of hue and saturation values
+    histogram += np.histogram2d(hue_values, saturation_values,
+                                bins=histogram_bins, range=[[0, 180], [0, 256]])[0]
 
-# # Convert the resulting image back to PIL format for display
-# skin_image = Image.fromarray((skin_regions * 255).astype(np.uint8))
+# Normalize the histogram to [0, 1]
+histogram_normalized = histogram / np.max(histogram)
 
-
-# # Convert RGB to HSV color space
-# image_hsv = np.array([colorsys.rgb_to_hsv(pixel[0] / 255, pixel[1] / 255, pixel[2] / 255)
-#                       for pixel in image_array])
-
-# Convert RGB to HSV color space
-image_hsv = np.array([colorsys.rgb_to_hsv(pixel[0] / 255, pixel[1] / 255, pixel[2] / 255)
-                      for pixel in image_array.reshape(-1, 3)])
-
-# Reshape the HSV array back to the original image shape
-image_hsv = image_hsv.reshape(image_array.shape[:-1] + (3,))
-
-# Define skin tone threshold ranges in HSV color space
-lower_hue = 0.0
-upper_hue = 0.1
-lower_saturation = 0.15
-upper_saturation = 1.0
-lower_value = 0.2
-upper_value = 1.0
-
-# Create a binary mask to identify pixels within the skin tone range
-skin_mask = np.logical_and.reduce((
-    image_hsv[:, :, 0] >= lower_hue,
-    image_hsv[:, :, 0] <= upper_hue,
-    image_hsv[:, :, 1] >= lower_saturation,
-    image_hsv[:, :, 1] <= upper_saturation,
-    image_hsv[:, :, 2] >= lower_value,
-    image_hsv[:, :, 2] <= upper_value
-))
+# Threshold for considering a pixel as skin tone based on histogram value
+threshold = 0
 
 # Apply the mask to the original image to extract skin tone regions
-skin_regions = np.zeros_like(image_array)
-skin_regions[skin_mask] = image_array[skin_mask]
+skin_regions = np.copy(image)
+
+for i, row in enumerate(image_array):
+    for j, pix in enumerate(row):
+        # print(pix)
+        if histogram[pix[0]][pix[1]] > 0:
+            pass
+        else:
+            skin_regions[i][j] = [0, 0, 0]
 
 # Convert the resulting image back to PIL format for display
 skin_image = Image.fromarray(skin_regions)
