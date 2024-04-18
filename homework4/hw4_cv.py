@@ -51,15 +51,14 @@ for image_hsv_t in skin_test_images:
 histogram_normalized = histogram / np.max(histogram)
 
 # Threshold for considering a pixel as skin tone based on histogram value
-threshold = 0
+threshold = 0.1
 
 # Apply the mask to the original image to extract skin tone regions
 skin_regions = np.copy(image)
 
 for i, row in enumerate(image_array):
     for j, pix in enumerate(row):
-        # print(pix)
-        if histogram[pix[0]][pix[1]] > 0:
+        if histogram[pix[0]][pix[1]] > threshold:
             pass
         else:
             skin_regions[i][j] = [0, 0, 0]
