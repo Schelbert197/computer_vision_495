@@ -51,7 +51,7 @@ lower_hue = 0.0
 upper_hue = 0.1
 lower_saturation = 0.15
 upper_saturation = 1.0
-lower_value = 0.3
+lower_value = 0.2
 upper_value = 1.0
 
 # Create a binary mask to identify pixels within the skin tone range
