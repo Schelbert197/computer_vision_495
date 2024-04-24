@@ -7,7 +7,7 @@ from scipy.ndimage import convolve
 
 
 # Open the .bmp file
-image = Image.open("homework5/test1.bmp")
+image = Image.open("homework5/lena.bmp")
 
 # Display basic information about the image
 print("Image format:", image.format)
@@ -106,8 +106,10 @@ def non_max_suppression(img, D):
 
 def threshold(img):
 
-    highThreshold = img.max() * 0.15
-    lowThreshold = highThreshold * 0.5
+    # highThreshold = img.max() * 0.15
+    # lowThreshold = highThreshold * 0.5
+
+    lowThreshold, highThreshold = find_threshold(img, 0.1)
 
     M, N = img.shape
     res = np.zeros((M, N), dtype=np.int32)
@@ -124,6 +126,22 @@ def threshold(img):
     res[weak_i, weak_j] = weak
 
     return (res)
+
+
+def find_threshold(mag, percent):
+    """Finds the threshold"""
+    hist, bins = np.histogram(mag.ravel(), bins=256, range=(0, 255))
+    hist = hist / np.sum(hist)
+    cum_hist = np.cumsum(hist)
+    threshold_high = 0
+    for i in range(256):
+        if cum_hist[i] >= percent:
+            threshold_high = i
+            break
+
+    threshold_low = threshold_high * 0.5
+
+    return threshold_low, threshold_high
 
 
 def hysteresis(img):
@@ -148,16 +166,28 @@ def hysteresis(img):
     return img
 
 
+def plot_image(image, index, title):
+    """Plots the image as a subplot"""
+    # Display the smoothed image
+    plt.subplot(2, 3, index)
+    plt.imshow(image, cmap='gray')
+    plt.axis('off')
+    plt.title(title)
+
+
+plot_image(np.array(image.convert('L')), 1, 'Original Image')
 # Apply Gaussian smoothing
-smooth_img = gauss_smoothing(image)
+smooth_img = gauss_smoothing(image, sigma=1.4)
+plot_image(smooth_img, 2, 'Smoothed Image')
 mag, theta = image_gradient(smooth_img, f_type='S')
+plot_image(mag, 3, 'Gradient Image')
 non_max = non_max_suppression(mag, theta)
+plot_image(non_max, 4, 'Suppressed Image')
 thresh = threshold(non_max)
+plot_image(thresh, 5, 'Threshold Image')
 final = hysteresis(thresh)
+plot_image(final, 6, 'Final Image')
 
 
 # Display the smoothed image
-plt.imshow(non_max, cmap='gray')
-plt.axis('off')
-plt.title('Smoothed Image')
 plt.show()
