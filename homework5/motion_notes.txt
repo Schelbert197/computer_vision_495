@@ -1,0 +1,10 @@
+When discussing motion we consider a pixel (u,v) which moves to (u + du, v + dv).
+
+We consider du and dv the displacement vector. We need a couple assumptions for the algo to work:
+
+1. Brightness consistency (D algo doesn't do well with Brightness issues) I(u,v,t) = I(u+du, v+dv, t+dt)
+2. Small motion. We want dt to be small between each frame. 
+
+I(u+du, v+dv, t+dt) = I(u,v,t) + (dI/dx)du + (dI/dy)dv + (dI/dt)dt
+In a small time frame we can conclude that the partial derivative terms are essentially zero. 
+dividing all terms by delta t gives a velocity term in u and v Vu, Vv. 

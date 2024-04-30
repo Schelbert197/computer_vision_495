@@ -7,13 +7,13 @@ from scipy.ndimage import convolve
 
 
 # Open the .bmp file
-image = Image.open("homework5/lena.bmp")
+image = Image.open("homework5/pointer1.bmp")
 
 # Display basic information about the image
 print("Image format:", image.format)
 print("Image mode:", image.mode)
 print("Image size:", image.size)
-image.show("Original Image")
+# image.show("Original Image")
 
 
 def gaussian_kernel(size, sigma=1):
@@ -61,7 +61,7 @@ def image_gradient(img, f_type='S'):
     G = G / G.max() * 255
     theta = np.arctan2(Iy, Ix)
 
-    return (G, theta)
+    return G, theta
 
 
 def non_max_suppression(img, D):
@@ -104,18 +104,18 @@ def non_max_suppression(img, D):
     return Z
 
 
-def threshold(img):
+def threshold(img, percentage=0.1):
 
     # highThreshold = img.max() * 0.15
     # lowThreshold = highThreshold * 0.5
 
-    lowThreshold, highThreshold = find_threshold(img, 0.1)
+    lowThreshold, highThreshold = find_threshold(img, percentage)
 
     M, N = img.shape
     res = np.zeros((M, N), dtype=np.int32)
 
-    weak = 75
-    strong = 255
+    weak = highThreshold
+    strong = lowThreshold
 
     strong_i, strong_j = np.where(img >= highThreshold)
     zeros_i, zeros_j = np.where(img < lowThreshold)
@@ -125,7 +125,7 @@ def threshold(img):
     res[strong_i, strong_j] = strong
     res[weak_i, weak_j] = weak
 
-    return (res)
+    return res, lowThreshold, highThreshold
 
 
 def find_threshold(mag, percent):
@@ -141,14 +141,17 @@ def find_threshold(mag, percent):
 
     threshold_low = threshold_high * 0.5
 
+    print(threshold_low)
+    print(threshold_high)
+
     return threshold_low, threshold_high
 
 
-def hysteresis(img):
+def hysteresis(img, t_low, t_high):
 
     M, N = img.shape
-    weak = 75
-    strong = 255
+    weak = t_low
+    strong = t_high
 
     for i in range(1, M-1):
         for j in range(1, N-1):
@@ -177,15 +180,15 @@ def plot_image(image, index, title):
 
 plot_image(np.array(image.convert('L')), 1, 'Original Image')
 # Apply Gaussian smoothing
-smooth_img = gauss_smoothing(image, sigma=1.4)
+smooth_img = gauss_smoothing(image, kernel_size=2, sigma=7.0)
 plot_image(smooth_img, 2, 'Smoothed Image')
-mag, theta = image_gradient(smooth_img, f_type='S')
+mag, theta = image_gradient(smooth_img, f_type='P')
 plot_image(mag, 3, 'Gradient Image')
-non_max = non_max_suppression(mag, theta)
-plot_image(non_max, 4, 'Suppressed Image')
-thresh = threshold(non_max)
-plot_image(thresh, 5, 'Threshold Image')
-final = hysteresis(thresh)
+thresh, t_low, t_high = threshold(mag, 0.9)
+plot_image(thresh, 4, 'Threshold Image')
+non_max = non_max_suppression(thresh, theta)
+plot_image(non_max, 5, 'Suppressed Image')
+final = hysteresis(thresh, t_low, t_high)
 plot_image(final, 6, 'Final Image')
 
 
