@@ -2,19 +2,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import imageio.v2 as imageio
+from scipy.ndimage import maximum_filter
+import cv2
 import math
 
 # Open the .bmp file
-image = Image.open("homework6/test.bmp")
+# image = Image.open("homework6/test.bmp")
 
 # Display basic information about the image
-print("Image format:", image.format)
-print("Image mode:", image.mode)
-print("Image size:", image.size)
-image.show("Original Image")
+# print("Image format:", image.format)
+# print("Image mode:", image.mode)
+# print("Image size:", image.size)
+# image.show("Original Image")
 
 
-def hough_line(img, angle_step=1, lines_are_white=True, value_threshold=5):
+def hough_line(img, angle_step=1, lines_are_white=True, value_threshold=50):
     # Rho and Theta ranges
     thetas = np.deg2rad(np.arange(-90.0, 90.0, angle_step))
     width, height = img.shape
@@ -45,16 +47,16 @@ def hough_line(img, angle_step=1, lines_are_white=True, value_threshold=5):
     return accumulator, thetas, rhos
 
 
-def show_hough_line(img, accumulator, thetas, rhos, save_path=None):
+def show_hough_line(img, accumulator, thetas, rhos, save_path=None, thresh=30):
 
     fig, ax = plt.subplots(1, 2, figsize=(10, 10))
 
     ax[0].imshow(img, cmap=plt.cm.gray)
-    ax[0].set_title('Input image')
+    ax[0].set_title('Input image w/ red hough lines superposed')
     ax[0].axis('image')
 
     ax[1].imshow(
-        accumulator, cmap='jet',
+        accumulator, cmap='viridis',
         extent=[np.rad2deg(thetas[-1]), np.rad2deg(thetas[0]), rhos[-1], rhos[0]])
     ax[1].set_aspect('equal', adjustable='box')
     ax[1].set_title('Hough transform')
@@ -62,7 +64,23 @@ def show_hough_line(img, accumulator, thetas, rhos, save_path=None):
     ax[1].set_ylabel('Distance (pixels)')
     ax[1].axis('image')
 
-    # plt.axis('off')
+    # Calculate lines from the accumulator
+    # Non-maximum suppression to only use one line per local maximum
+    maxima = maximum_filter(accumulator, size=20)
+    accumulator = (accumulator == maxima) & (accumulator > thresh)
+    new_rhos, new_thetas = np.where(accumulator)
+    for q in range(len(new_rhos)):
+        a = np.cos(thetas[new_thetas[q]])
+        b = np.sin(thetas[new_thetas[q]])
+        x0 = a * rhos[new_rhos[q]]
+        y0 = b * rhos[new_rhos[q]]
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        ax[0].plot((x1, x2), (y1, y2), color='red')
+
+    # Saves the image to desired directory if given
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight')
     plt.show()
@@ -71,23 +89,14 @@ def show_hough_line(img, accumulator, thetas, rhos, save_path=None):
 def rgb2gray(rgb):
     return np.dot(rgb[..., :3], [0.299, 0.587, 0.114]).astype(np.uint8)
 
-# # Create binary image and call hough_line
-# image = np.zeros((50, 50))
-# image[10:40, 10:40] = np.eye(30)
-# accumulator, thetas, rhos = hough_line(image)
-
-# # Easiest peak finding based on max votes
-# idx = np.argmax(accumulator)
-# rho = rhos[idx // accumulator.shape[1]]
-# theta = thetas[idx % accumulator.shape[1]]
-# print("rho={0:.2f}, theta={1:.0f}".format(rho, np.rad2deg(theta)))
-
 
 if __name__ == '__main__':
-    imgpath = 'homework6/test.bmp'
+    imgpath = 'homework6/input.bmp'
     img = imageio.imread(imgpath)
     if img.ndim == 3:
         img = rgb2gray(img)
-    accumulator, thetas, rhos = hough_line(img)
+    edge_img = cv2.Canny(img, 100, 200)
+
+    accumulator, thetas, rhos = hough_line(edge_img)
     show_hough_line(img, accumulator, thetas, rhos,
                     save_path='homework6/output.png')
